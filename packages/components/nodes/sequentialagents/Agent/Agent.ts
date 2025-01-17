@@ -23,7 +23,14 @@ import {
     ConversationHistorySelection
 } from '../../../src/Interface'
 import { ToolCallingAgentOutputParser, AgentExecutor, SOURCE_DOCUMENTS_PREFIX, ARTIFACTS_PREFIX } from '../../../src/agents'
-import { getInputVariables, getVars, handleEscapeCharacters, prepareSandboxVars, removeInvalidImageMarkdown } from '../../../src/utils'
+import {
+    extractOutputFromArray,
+    getInputVariables,
+    getVars,
+    handleEscapeCharacters,
+    prepareSandboxVars,
+    removeInvalidImageMarkdown
+} from '../../../src/utils'
 import {
     customGet,
     getVM,
@@ -298,7 +305,12 @@ class Agent_SeqAgents implements INode {
             {
                 label: 'Require Approval',
                 name: 'interrupt',
-                description: 'Require approval before executing tools. Will proceed when tools are not called',
+                description:
+                    'Pause execution and request user approval before running tools.\n' +
+                    'If enabled, the agent will prompt the user with customizable approve/reject options\n' +
+                    'and will proceed only after approval. This requires a configured agent memory to manage\n' +
+                    'the state and handle approval requests.\n' +
+                    'If no tools are invoked, the agent proceeds without interruption.',
                 type: 'boolean',
                 optional: true
             },
@@ -663,7 +675,7 @@ async function createAgent(
             sessionId: flowObj?.sessionId,
             chatId: flowObj?.chatId,
             input: flowObj?.input,
-            verbose: process.env.DEBUG === 'true' ? true : false,
+            verbose: process.env.DEBUG === 'true',
             maxIterations: maxIterations ? parseFloat(maxIterations) : undefined
         })
         return executor
@@ -822,6 +834,7 @@ async function agentNode(
         }
 
         let outputContent = typeof result === 'string' ? result : result.content || result.output
+        outputContent = extractOutputFromArray(outputContent)
         outputContent = removeInvalidImageMarkdown(outputContent)
 
         if (nodeData.inputs?.updateStateMemoryUI || nodeData.inputs?.updateStateMemoryCode) {
