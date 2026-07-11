@@ -77,7 +77,8 @@ const getSingleNodeAsyncOptions = async (req: Request, res: Response, next: Next
         }
         const body = req.body
         body.searchOptions = getWorkspaceSearchOptionsFromReq(req)
-        const apiResponse = await nodesService.getSingleNodeAsyncOptions(req.params.name, body)
+        const workspaceId = req.user?.activeWorkspaceId
+        const apiResponse = await nodesService.getSingleNodeAsyncOptions(req.params.name, body, workspaceId)
         return res.json(apiResponse)
     } catch (error) {
         next(error)
@@ -94,7 +95,8 @@ const executeCustomFunction = async (req: Request, res: Response, next: NextFunc
         }
         const orgId = req.user?.activeOrganizationId
         const workspaceId = req.user?.activeWorkspaceId
-        const apiResponse = await nodesService.executeCustomFunction(req.body, workspaceId, orgId)
+        const canViewVariables = !!(req.user?.isOrganizationAdmin || req.user?.permissions?.includes('variables:view'))
+        const apiResponse = await nodesService.executeCustomFunction(req.body, workspaceId, orgId, canViewVariables)
         return res.json(apiResponse)
     } catch (error) {
         next(error)

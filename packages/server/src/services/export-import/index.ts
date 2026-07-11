@@ -155,7 +155,8 @@ const exportData = async (exportInput: ExportInput, activeWorkspaceId: string): 
 
         let Variable: Variable[] | { data: Variable[]; total: number } =
             exportInput.variable === true ? await variableService.getAllVariables(activeWorkspaceId) : []
-        Variable = 'data' in Variable ? Variable.data : Variable
+        const variables = 'data' in Variable ? Variable.data : Variable
+        Variable = variables.map((v) => ({ ...v, value: '' }))
 
         return {
             FileDefaultName,
@@ -951,6 +952,10 @@ const getChatType = (chatType?: ChatType): string => {
             return 'API/Embed'
         case ChatType.MCP:
             return 'MCP'
+        case ChatType.SCHEDULED:
+            return 'Scheduled'
+        case ChatType.WEBHOOK:
+            return 'Webhook'
     }
 }
 
